@@ -59,8 +59,8 @@ extension Database {
 
     func fetchAllMessagesForChatId(chatId: Int64) -> [MessageModel]? {
       
-        let chatId = Expression<Int64>("chatId")
-        let senderId = Expression<Int64>("senderId")
+        let chatId = Expression<Int64>("messages.chatId")
+        let senderId = Expression<Int64>("messages.senderId")
 
      
         var messagesForChat: [MessageModel] = []
@@ -69,6 +69,7 @@ extension Database {
             let query = messages.join(users, on: senderId == users[Expression<Int64>("id")])
                                 .join(chats, on: chatId == chats[Expression<Int64>("id")])
                                 .filter(chatId == chatId)
+
             
             for row in try db!.prepare(query) {
                 if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
@@ -78,6 +79,7 @@ extension Database {
                     }
                 }
             }
+            print(messagesForChat)
             return messagesForChat
         } catch {
             print("Retrieval of messages for chat ID \(chatId) failed: \(error)")
@@ -86,8 +88,8 @@ extension Database {
     }
 
     func fetchAllMessagesForChatIdAndCurrentNumber(chatId: Int64, currentNumber: String) -> [MessageModel]? {
-        let chatIdExpr = Expression<Int64>("chatId")
-        let senderId = Expression<Int64>("senderId")
+        let chatIdExpr = Expression<Int64>("messages.chatId")
+        let senderId = Expression<Int64>("messages.senderId")
         let number = Expression<String>("number")
         
         var messagesForChat: [MessageModel] = []
