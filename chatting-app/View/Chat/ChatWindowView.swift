@@ -34,7 +34,7 @@ struct ChatWindowView: View {
                                       timestamp: Date(),
                                       status: .sent,
                                       chat: chat)
-      
+        print(newMessage)
         messageViewModel.InsertMessages(newMessage: newMessage)
         // Clear the typed message
         typedMessage = ""
@@ -85,7 +85,7 @@ struct ChatWindowView: View {
             }
             .onAppear {
                 UserViewModel.fetchUserWithNumber(number: currentUserNumber)
-                messageViewModel.fetchAllMessagesForChatId(chatId: chat.id)
+                messageViewModel.fetchAllMessagesForChatId(chatId: 9756)
             }
                 
                 HStack {
@@ -119,7 +119,7 @@ struct ChatWindowView: View {
             .navigationBarTitle(chat.name, displayMode: .inline)
             .onAppear {
                 UserViewModel.fetchUserWithNumber(number: currentUserNumber)
-                messageViewModel.fetchAllMessagesForChatId(chatId: chat.id)
+                messageViewModel.fetchAllMessagesForChatId(chatId: 9756)
             }
         }
         

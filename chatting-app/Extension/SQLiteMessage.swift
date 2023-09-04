@@ -59,31 +59,45 @@ extension Database {
 
     func fetchAllMessagesForChatId(chatId: Int64) -> [MessageModel]? {
       
-        let chatId = Expression<Int64>("messages.chatId")
+        let chatIdExpr = Expression<Int64>("messages.chatId")
         let senderId = Expression<Int64>("messages.senderId")
 
-     
+        print("Chat ID =========== \(chatId)")
+        print("Sender ID =========== \(senderId)")
+        
+        
         var messagesForChat: [MessageModel] = []
 
         do {
             let query = messages.join(users, on: senderId == users[Expression<Int64>("id")])
-                                .join(chats, on: chatId == chats[Expression<Int64>("id")])
-                                .filter(chatId == chatId)
-
+                                .join(chats, on: chatIdExpr == chats[Expression<Int64>("id")])
+                                .filter(chatIdExpr == chatId)
             
-            for row in try db!.prepare(query) {
-                if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
-                    if let chatRow = try db!.pluck(chats.filter(Expression<Int64>("id") == row[chatId])) {
-                        let message = MessageModel(row: row, userRow: userRow, chatRow: chatRow)
-                        messagesForChat.append(message)
+            do {
+                for row in try db!.prepare(query) {
+                    print("Processing row: \(row)")
+                    
+                    if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
+                        print("Found user row: \(userRow)")
+                        
+                        if let chatRow = try db!.pluck(chats.filter(Expression<Int64>("id") == row[chatIdExpr])) {
+                            print("Found chat row: \(chatRow)")
+                            
+                            let message = MessageModel(row: row, userRow: userRow, chatRow: chatRow)
+                            messagesForChat.append(message)
+                        } else {
+                            print("Chat row not found for chatId: \(row[chatIdExpr])")
+                        }
+                    } else {
+                        print("User row not found for userId: \(row[senderId])")
                     }
                 }
+            } catch {
+                print("Error encountered: \(error)")
+                return nil
             }
             print(messagesForChat)
             return messagesForChat
-        } catch {
-            print("Retrieval of messages for chat ID \(chatId) failed: \(error)")
-            return nil
         }
     }
 
