@@ -34,7 +34,6 @@ struct ChatWindowView: View {
                                       timestamp: Date(),
                                       status: .sent,
                                       chat: chat)
-        print(newMessage)
         messageViewModel.InsertMessages(newMessage: newMessage)
         // Clear the typed message
         typedMessage = ""
@@ -63,31 +62,30 @@ struct ChatWindowView: View {
                           .padding([.top, .leading, .trailing])
                       }
             
-            List {
-                ForEach(messageViewModel.messages, id: \.id) { message in
-                    HStack {
-                        if chat.isGroupChat && message.sender.number != currentUserNumber {
-                            profileImage(for: message.sender.name)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 40, height: 40)
-                                .clipShape(Circle())
-                                .padding(.trailing, 5)
-                        }
-                        
-                        MessageRow(message: message)
-                        
-                        if message.sender.number == currentUserNumber {
-                            Spacer()
+            ScrollView {
+                VStack {
+                    ForEach(messageViewModel.messages, id: \.id) { message in
+                        HStack {
+                            if chat.isGroupChat && message.sender.number != currentUserNumber {
+                                profileImage(for: message.sender.name)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 40, height: 40)
+                                    .clipShape(Circle())
+                                    .padding(.trailing, 5)
+                            }
+                            
+                            BasicMessageRow(message: message)
+
+                            
+                            if message.sender.number == currentUserNumber {
+                                Spacer()
+                            }
                         }
                     }
                 }
             }
-            .onAppear {
-                UserViewModel.fetchUserWithNumber(number: currentUserNumber)
-                messageViewModel.fetchAllMessagesForChatId(chatId: 9756)
-            }
-                
+
                 HStack {
                     TextField("Type a message...", text: $typedMessage)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -99,16 +97,16 @@ struct ChatWindowView: View {
                             XMPPService.shared.connect(hostName: domain, port: 5222, username: "\(currentUserNumber)@\(domain)", password: userPassword) { success, error in
                                 DispatchQueue.main.async {
                                     if success {
-                                        xmppService.sendMessage(to: UserViewModel.fetchedUser?.XMPPJID ?? "\(chat.number)@\(domain)", content: typedMessage)
-                                        storeAndClearMessage()  // Function to store the message and clear the typedMessage.
+                                        xmppService.sendMessage(to:"\(chat.number)@\(domain)", content: typedMessage)
+                                        storeAndClearMessage()
                                     } else {
                                         print("Failed to connect before sending the message.")
                                     }
                                 }
                             }
                         } else {
-                            xmppService.sendMessage(to: UserViewModel.fetchedUser?.XMPPJID ?? "\(chat.number)@\(domain)", content: typedMessage)
-                            storeAndClearMessage()  // Function to store the message and clear the typedMessage.
+                            xmppService.sendMessage(to:"\(chat.number)@\(domain)", content: typedMessage)
+                            storeAndClearMessage()
                         }
                     }
 
@@ -119,9 +117,45 @@ struct ChatWindowView: View {
             .navigationBarTitle(chat.name, displayMode: .inline)
             .onAppear {
                 UserViewModel.fetchUserWithNumber(number: currentUserNumber)
-                messageViewModel.fetchAllMessagesForChatId(chatId: 9756)
+                messageViewModel.fetchAllMessagesForChatId(chatId: chat.id) {
+                       print(messageViewModel.messages)
+                   }
             }
+
         }
         
     }
 
+struct BasicMessageRow: View {
+    var message: MessageModel
+    @AppStorage("userNumber") var currentUserNumber: String = ""
+    
+    var body: some View {
+        HStack {
+            if message.sender.number != currentUserNumber {
+                Text(message.sender.name)
+                    .font(.headline)
+                    .padding()
+                
+                Text(message.content)
+                    .padding()
+                    .background(Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            } else {
+                Spacer()
+
+                Text(message.content)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+
+                Text("Me")
+                    .font(.headline)
+                    .padding()
+            }
+        }
+        .padding([.leading, .trailing], 10)
+    }
+}

@@ -11,125 +11,63 @@ import SQLite
 extension Database {
     
     func insertChat(message: MessageModel) {
-            let id = Expression<Int64>("id")
-            let chatId = Expression<Int64>("chatId")
-            let senderId = Expression<Int64>("senderId")
-            let content = Expression<String>("content")
-            let timestamp = Expression<Date>("timestamp")
-            let status = Expression<String>("status")
-            
-            do {
-                try db!.run(messages.insert(id <- message.id,
-                                         chatId <- message.chatId,
-                                         senderId <- message.sender.id,
-                                         content <- message.content,
-                                         timestamp <- message.timestamp,
-                                        status <- message.status.rawValue
-                                        ))
-            } catch {
-                print("Insertion of chat failed: \(error)")
-            }
-        }
-    
-    func fetchAllMessages() -> [MessageModel]? {
-        let chatIdExpr = Expression<Int64>("chatId")
+        let id = Expression<Int64>("id")
+        let chatId = Expression<Int64>("chatId")
         let senderId = Expression<Int64>("senderId")
-        
-        var messagesArray: [MessageModel] = []
+        let content = Expression<String>("content")
+        let timestamp = Expression<Date>("timestamp")
+        let status = Expression<String>("status")
+
+        // Print the values before inserting
+        print("""
+            Values to be inserted:
+            ID: \(message.id)
+            Chat ID: \(message.chat.id)
+            Sender ID: \(message.sender.id)
+            Content: \(message.content)
+            Timestamp: \(message.timestamp)
+            Status: \(message.status.rawValue)
+            """)
 
         do {
-            let query = messages.join(users, on: senderId == users[Expression<Int64>("id")])
-                                .join(chats, on: chatIdExpr == chats[Expression<Int64>("id")])
-
-            for row in try db!.prepare(query) {
-                if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
-                    if let chatRow = try db!.pluck(chats.filter(Expression<Int64>("id") == row[chatIdExpr])) {
-                        let message = MessageModel(row: row, userRow: userRow, chatRow: chatRow)
-                        messagesArray.append(message)
-                    }
-                }
-            }
-            return messagesArray
+            try db!.run(messages.insert(id <- message.id,
+                                        chatId <- message.chat.id,
+                                        senderId <- message.sender.id,
+                                        content <- message.content,
+                                        timestamp <- message.timestamp,
+                                        status <- message.status.rawValue
+            ))
         } catch {
-            print("Retrieval of all messages failed: \(error)")
-            return nil
+            print("Insertion of chat failed: \(error)")
         }
     }
-
-
-    func fetchAllMessagesForChatId(chatId: Int64) -> [MessageModel]? {
-      
-        let chatIdExpr = Expression<Int64>("messages.chatId")
-        let senderId = Expression<Int64>("messages.senderId")
-
-        print("Chat ID =========== \(chatId)")
-        print("Sender ID =========== \(senderId)")
-        
-        
-        var messagesForChat: [MessageModel] = []
-
-        do {
-            let query = messages.join(users, on: senderId == users[Expression<Int64>("id")])
-                                .join(chats, on: chatIdExpr == chats[Expression<Int64>("id")])
-                                .filter(chatIdExpr == chatId)
-            
-            do {
-                for row in try db!.prepare(query) {
-                    print("Processing row: \(row)")
-                    
-                    if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
-                        print("Found user row: \(userRow)")
-                        
-                        if let chatRow = try db!.pluck(chats.filter(Expression<Int64>("id") == row[chatIdExpr])) {
-                            print("Found chat row: \(chatRow)")
-                            
-                            let message = MessageModel(row: row, userRow: userRow, chatRow: chatRow)
-                            messagesForChat.append(message)
-                        } else {
-                            print("Chat row not found for chatId: \(row[chatIdExpr])")
-                        }
-                    } else {
-                        print("User row not found for userId: \(row[senderId])")
-                    }
-                }
-            } catch {
-                print("Error encountered: \(error)")
-                return nil
-            }
-            print(messagesForChat)
-            return messagesForChat
-        }
-    }
-
-    func fetchAllMessagesForChatIdAndCurrentNumber(chatId: Int64, currentNumber: String) -> [MessageModel]? {
-        let chatIdExpr = Expression<Int64>("messages.chatId")
-        let senderId = Expression<Int64>("messages.senderId")
-        let number = Expression<String>("number")
-        
-        var messagesForChat: [MessageModel] = []
-
-        do {
-            // Join messages with users and filter by chatId and user's number
-            let query = messages.join(users, on: senderId == users[Expression<Int64>("id")])
-                                .join(chats, on: chatIdExpr == chats[Expression<Int64>("id")])
-                                .filter(chatIdExpr == chatId && users[number] == currentNumber)
-            
-            // Iterate through the query results
-            for row in try db!.prepare(query) {
-                if let userRow = try db!.pluck(users.filter(Expression<Int64>("id") == row[senderId])) {
-                    if let chatRow = try db!.pluck(chats.filter(Expression<Int64>("id") == row[chatIdExpr])) {
-                        let message = MessageModel(row: row, userRow: userRow, chatRow: chatRow)
-                        messagesForChat.append(message)
-                    }
-                }
-            }
-            print(messagesForChat)
-            return messagesForChat
-        } catch {
-            print("Retrieval of messages for chat ID \(chatId) and user number \(currentNumber) failed: \(error)")
-            return nil
-        }
-    }
-
     
+    func fetchMessages(for chatId: Int64) -> [MessageModel] {
+         let messagesTable = Table("messages")
+         
+         let chatIdExpr = Expression<Int64>("chatId")
+         let senderId = Expression<Int64>("senderId")
+         let content = Expression<String>("content")
+         let timestamp = Expression<Date>("timestamp")
+         let status = Expression<String>("status")
+
+         var fetchedMessages: [MessageModel] = []
+
+         do {
+             for row in try db!.prepare(messagesTable.filter(chatIdExpr == chatId)) {
+                 let message = MessageModel(
+                     chatId: row[chatIdExpr],
+                     sender: fetchUser(withId: row[senderId])!,
+                     content: row[content],
+                     timestamp: row[timestamp],
+                     status: MessageStatus(rawValue: row[status]) ?? .sent,
+                     chat: fetchChat(withId: row[chatIdExpr])!
+                 )
+                 fetchedMessages.append(message)
+             }
+         } catch {
+             print("Retrieval of messages failed: \(error)")
+         }
+         return fetchedMessages
+     }
 }

@@ -34,25 +34,34 @@ struct MessageModel: Identifiable {
     let timestamp: Date
     let status: MessageStatus
     let chat: ChatModel
-    
+
     init(row: Row, userRow: Row, chatRow: Row) {
-        id = row[Expression<Int64>("id")]
-        chatId = row[Expression<Int64>("chatId")]
+        let messageIdAlias = Expression<Int64>("messageIdAlias")
+        let chatIdExpr = Expression<Int64>("chatId")
+        id = row[messageIdAlias]
+        chatId = row[chatIdExpr]
         sender = UserModel(row: userRow)
         content = row[Expression<String>("content")]
         timestamp = row[Expression<Date>("timestamp")]
         status = MessageStatus(status: row[Expression<String>("status")]) ?? .sent
         chat = ChatModel(row: chatRow)
     }
-    
+
     init(chatId: Int64, sender: UserModel, content: String, timestamp: Date, status: MessageStatus, chat: ChatModel) {
-           self.id = Int64.random(in: 1..<Int64.max) 
-           self.chatId = chatId
-           self.sender = sender
-           self.content = content
-           self.timestamp = timestamp
-           self.status = status
-           self.chat = chat
-       }
+        self.id = Int64.random(in: 1..<Int64.max)
+        self.chatId = chatId
+        self.sender = sender
+        self.content = content
+        self.timestamp = timestamp
+        self.status = status
+        self.chat = chat
+    }
 }
+
+struct SimpleMessageModel {
+    let id: Int
+    let content: String
+}
+
+
 

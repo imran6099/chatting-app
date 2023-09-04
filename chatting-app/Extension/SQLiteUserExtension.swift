@@ -99,7 +99,33 @@ extension Database {
            }
        }
     
- 
+    func fetchUser(withId userId: Int64) -> UserModel? {
+            let usersTable = Table("users")
+            
+            let id = Expression<Int64>("id")
+            let name = Expression<String>("name")
+            let number = Expression<String>("number")
+            let XMPPJID = Expression<String>("XMPPJID")
+            let lastActive = Expression<Date>("lastActive")
+            let isActive = Expression<Bool>("isActive")
+            
+            do {
+                if let row = try db?.pluck(usersTable.filter(id == userId)) {
+                    return UserModel(
+                        id: row[id],
+                        name: row[name],
+                        number: row[number],
+                        XMPPJID: row[XMPPJID],
+                        lastActive: row[lastActive],
+                        isActive: row[isActive]
+                    )
+                }
+            } catch {
+                print("Retrieval of user failed: \(error)")
+            }
+            
+            return nil
+        }
        
 }
 

@@ -39,7 +39,6 @@ class UserChatViewModel: ObservableObject {
            if let user = database.fetchUserWithNumber(number: number) {
                self.fetchedUser = user
            } else {
-               // Handle if no user is found or some other logic
                print("No user found for the provided number \(number)")
            }
        }

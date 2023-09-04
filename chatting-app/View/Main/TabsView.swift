@@ -45,27 +45,6 @@ struct TabsView: View {
                 }
                 .accentColor(Color("ColorGreenAdabtive"))
                 
-//                if selectedTab == 0 {
-//                    VStack {
-//                        Spacer()
-//                        
-//                        HStack {
-//                            Spacer()
-//                            Button(action: {
-//                                selectedTab = 3 
-//                            }, label: {
-//                                Image(systemName: "bubble.right.fill")
-//                                    .renderingMode(.template)
-//                                    .resizable()
-//                                    .frame(width: 20, height: 20)
-//                                    .padding()
-//                                    .background(Color("ColorGreenMedium"))
-//                                    .foregroundColor(.white)
-//                                    .clipShape(Circle())
-//                            })
-//                        }.padding(.trailing, 25)
-//                    }.padding(.bottom, 75)
-//                }
             }
         }
     }

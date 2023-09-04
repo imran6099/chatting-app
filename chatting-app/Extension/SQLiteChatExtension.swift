@@ -93,4 +93,30 @@ extension Database {
         }
     }
     
+    func fetchChat(withId chatId: Int64) -> ChatModel? {
+        let chatsTable = Table("chats")
+        
+        let id = Expression<Int64>("id")
+        let name = Expression<String>("name")
+        let number = Expression<String>("number")
+        let isGroupChat = Expression<Bool>("isGroupChat")
+        let lastMessageId = Expression<Int64?>("lastMessageId")
+        
+        do {
+            if let row = try db?.pluck(chatsTable.filter(id == chatId)) {
+                return ChatModel(
+                    id: row[id],
+                    name: row[name],
+                    number: row[number],
+                    isGroupChat: row[isGroupChat],
+                    lastMessageId: String(row[lastMessageId] ?? -1) 
+                )
+            }
+        } catch {
+            print("Retrieval of chat failed: \(error)")
+        }
+        
+        return nil
+    }
 }
+    

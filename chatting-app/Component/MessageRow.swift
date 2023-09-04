@@ -11,7 +11,7 @@ struct MessageRow: View {
         var message: MessageModel
         @AppStorage("userNumber") var currentUserNumber: String = ""
     
-        @State private var isMessageTapped: Bool = false
+    @State private var isMessageTapped: Bool = true
         
         let dateFormatter: DateFormatter = {
             let formatter = DateFormatter()
@@ -19,11 +19,11 @@ struct MessageRow: View {
             formatter.timeStyle = .short
             return formatter
         }()
+    
 
     var body: some View {
             HStack {
                 if message.sender.number == currentUserNumber {
-                    Spacer()
                     VStack(alignment: .trailing) {
                         Text(message.content)
                             .padding()
@@ -43,7 +43,7 @@ struct MessageRow: View {
                     VStack(alignment: .leading) {
                         Text(message.content)
                             .padding()
-                            .background(Color.gray)
+                            .background(Color.blue)
                             .foregroundColor(.white)
                             .cornerRadius(15)
 
