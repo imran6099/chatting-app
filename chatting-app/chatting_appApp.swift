@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct chatting_appApp: App {
+    @StateObject private var authStatus = AuthStatus()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(authStatus)
         }
     }
 }

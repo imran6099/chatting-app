@@ -6,3 +6,7 @@
 //
 
 import Foundation
+
+class AuthStatus: ObservableObject {
+    @Published var isAuthenticated: Bool = false
+}

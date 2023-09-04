@@ -8,8 +8,18 @@
 import SwiftUI
 
 struct SettingView: View {
+    @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
+    @AppStorage("userNumber") var userNumber: String = ""
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Button(action: {
+                self.isLoggedIn = false
+                self.userNumber = ""
+            }, label: {
+                Text("Logout")
+            })
+        }
     }
 }
 

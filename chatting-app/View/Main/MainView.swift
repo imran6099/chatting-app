@@ -7,14 +7,22 @@
 
 import SwiftUI
 
-struct MainVIew: View {
+struct MainView: View {
+    @State var x = UIScreen.main.bounds.width + 20
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            ZStack(alignment: Alignment(horizontal: .leading, vertical: .center)) {
+                VStack {
+                    TabsView()
+                    Spacer(minLength: 0)
+                }
+            }
+        }.padding(.top, -40)
     }
 }
 
-struct MainVIew_Previews: PreviewProvider {
+struct MainView_Previews: PreviewProvider {
     static var previews: some View {
-        MainVIew()
+        MainView()
     }
 }

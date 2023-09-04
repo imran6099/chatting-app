@@ -8,34 +8,39 @@
 import SwiftUI
 
 struct ChatWindowView: View {
-    var chat: Chat
+    @ObservedObject var messageViewModel: MessageViewModel = MessageViewModel()
+    @ObservedObject var UserViewModel: UserChatViewModel
+    
+    @AppStorage("userNumber") var currentUserNumber: String = ""
+    @AppStorage("userPassword") var userPassword: String = ""
+
+    let xmppService = XMPPService.shared
+    let domain = "uatchat2.waafi.com"
+    
+    var chat: ChatModel
     @State private var typedMessage: String = ""
     
     func profileImage(for name: String) -> Image {
-        // Placeholder for now; replace this with your method of obtaining user images
         return Image(systemName: "person.circle")
     }
     
-    var messages: [ChatMessage] = [
-        ChatMessage(id: UUID(), sender: "John", content: "Hello!", timestamp: Date().addingTimeInterval(-3600), status: .read),
-        ChatMessage(id: UUID(), sender: "Me", content: "How are you?", timestamp: Date().addingTimeInterval(-1800), status: .read),
-        ChatMessage(id: UUID(), sender: "John", content: "I'm doing well!", timestamp: Date(), status: .delivered)
-    ]
-    
-    var presenceStatus: String {
-            guard !chat.isGroupChat, let participant = chat.participants.first else {
-                return ""
-            }
-            
-            if participant.isActive {
-                return "Online"
-            } else {
-                // Assuming you have a lastSeen property in ChatParticipant or a similar method to fetch this data
-                let formatter = DateFormatter()
-                formatter.timeStyle = .short
-                return "Last seen at \(formatter.string(from: Date()))" // Use the actual last seen date here
-            }
-        }
+    func storeAndClearMessage() {
+        let currentUser = UserModel(id: UserViewModel.fetchedUser?.id ?? 1, name: "", number: currentUserNumber, XMPPJID: "\(currentUserNumber)@\(domain)", lastActive: Date(), isActive: true)
+        
+        let newMessage = MessageModel(
+                                      chatId: chat.id,
+                                      sender: currentUser,
+                                      content: typedMessage,
+                                      timestamp: Date(),
+                                      status: .sent,
+                                      chat: chat)
+      
+        messageViewModel.InsertMessages(newMessage: newMessage)
+        // Clear the typed message
+        typedMessage = ""
+    }
+
+
     
     var body: some View {
         VStack {
@@ -48,32 +53,39 @@ struct ChatWindowView: View {
                                   .clipShape(Circle())
                                   .padding(.trailing, 10)
                               
-                              Text(presenceStatus)
-                                  .font(.caption)
-                                  .foregroundColor(.gray)
+//                              Text(presenceStatus)
+//                                  .font(.caption)
+//                                  .foregroundColor(.gray)
                               
+                              Text(chat.number)
                               Spacer()
                           }
                           .padding([.top, .leading, .trailing])
                       }
             
-            List(messages) { message in
-                HStack {
-                    if chat.isGroupChat && message.sender != "Me" {
-                        profileImage(for: message.sender)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 40, height: 40)
-                            .clipShape(Circle())
-                            .padding(.trailing, 5)
-                    }
-                    
-                    MessageRow(message: message)
-                    
-                    if message.sender == "Me" {
-                        Spacer()
+            List {
+                ForEach(messageViewModel.messages, id: \.id) { message in
+                    HStack {
+                        if chat.isGroupChat && message.sender.number != currentUserNumber {
+                            profileImage(for: message.sender.name)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
+                                .padding(.trailing, 5)
+                        }
+                        
+                        MessageRow(message: message)
+                        
+                        if message.sender.number == currentUserNumber {
+                            Spacer()
+                        }
                     }
                 }
+            }
+            .onAppear {
+                UserViewModel.fetchUserWithNumber(number: currentUserNumber)
+                messageViewModel.fetchAllMessagesForChatId(chatId: chat.id)
             }
                 
                 HStack {
@@ -82,13 +94,33 @@ struct ChatWindowView: View {
                         .padding(.horizontal)
                     
                     Button("Send") {
-                        // Handle sending the message
+                        if !xmppService.isXmppConnected {
+                            // Connect before sending
+                            XMPPService.shared.connect(hostName: domain, port: 5222, username: "\(currentUserNumber)@\(domain)", password: userPassword) { success, error in
+                                DispatchQueue.main.async {
+                                    if success {
+                                        xmppService.sendMessage(to: UserViewModel.fetchedUser?.XMPPJID ?? "\(chat.number)@\(domain)", content: typedMessage)
+                                        storeAndClearMessage()  // Function to store the message and clear the typedMessage.
+                                    } else {
+                                        print("Failed to connect before sending the message.")
+                                    }
+                                }
+                            }
+                        } else {
+                            xmppService.sendMessage(to: UserViewModel.fetchedUser?.XMPPJID ?? "\(chat.number)@\(domain)", content: typedMessage)
+                            storeAndClearMessage()  // Function to store the message and clear the typedMessage.
+                        }
                     }
-                    .padding(.trailing)
+
+
                 }
                 .padding(.bottom)
             }
             .navigationBarTitle(chat.name, displayMode: .inline)
+            .onAppear {
+                UserViewModel.fetchUserWithNumber(number: currentUserNumber)
+                messageViewModel.fetchAllMessagesForChatId(chatId: chat.id)
+            }
         }
         
     }

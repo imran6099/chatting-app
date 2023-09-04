@@ -6,10 +6,16 @@
 //
 
 import SwiftUI
+import XMPPFramework
+import Foundation
 
 extension View {
     func getRect () -> CGRect {
         return UIScreen.main.bounds
     }
 }
+
+
+
+
 

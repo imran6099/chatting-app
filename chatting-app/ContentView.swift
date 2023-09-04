@@ -8,15 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+        Group {
+               if isLoggedIn {
+                   MainView().onAppear {
+                       UserChatViewModel().checkAndAddMockUsers()
+                   }
+               } else {
+                   LoginView()
+               }
+           }
         }
-        .padding()
-    }
 }
 
 struct ContentView_Previews: PreviewProvider {

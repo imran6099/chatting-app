@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct MessageRow: View {
-    var message: ChatMessage
+        var message: MessageModel
+        @AppStorage("userNumber") var currentUserNumber: String = ""
+    
         @State private var isMessageTapped: Bool = false
         
         let dateFormatter: DateFormatter = {
@@ -20,7 +22,7 @@ struct MessageRow: View {
 
     var body: some View {
             HStack {
-                if message.sender == "Me" {
+                if message.sender.number == currentUserNumber {
                     Spacer()
                     VStack(alignment: .trailing) {
                         Text(message.content)

@@ -8,13 +8,26 @@
 import SwiftUI
 
 struct TobView: View {
+    @Binding var x: CGFloat
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            HStack {
+                Spacer(minLength: 0)
+                
+                Image("waafi_logo")
+                    .resizable()
+                    .renderingMode(.template)
+                    .scaledToFit()
+                    .padding(.trailing)
+                    .frame(width: 90, height: 90)
+                    .foregroundColor(Color.white)
+                
+                Spacer(minLength: 0)
+                
+            } .padding()
+             
+        }.background(Color("ColorGreenMedium"))
     }
 }
 
-struct TobView_Previews: PreviewProvider {
-    static var previews: some View {
-        TobView()
-    }
-}
